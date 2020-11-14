@@ -34,37 +34,28 @@ class DB_Utils:
 
 class DB_Queries:
 
-    # def selectPlayer(self):
-    #     sql = "SELECT DISTINCT team_id,position,NATION FROM player"
-    #     params = ()
-    #
-    #     util = DB_Utils()
-    #     tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
-    #     return tuples
-
-
     def selectPlayerUsingvalue(self, teamidValue, positionValue, nationValue):
         print(teamidValue, positionValue, nationValue)
-        if positionValue == '미정' and nationValue =='대한민국':
+        if positionValue == "미정" and nationValue =='대한민국':
             if teamidValue == "사용안함":
-                sql = "SELECT * FROM player WHERE positionValue IS NULL AND NATION IS NULL"
+                sql = "SELECT * FROM player WHERE position IS NULL AND NATION IS NULL"
                 params = ()
             else:
-                sql = "SELECT * FROM player WHERE positionValue IS NULL AND NATION IS NULL AND team_id = %s"
+                sql = "SELECT * FROM player WHERE position IS NULL AND NATION IS NULL AND team_id = %s"
                 params = (teamidValue)
         elif positionValue == "미정":
             print("여기여기")
             if teamidValue == "사용안함" and nationValue == "사용안함":
-                sql = "SELECT * FROM player WHERE positionValue IS NULL"
+                sql = "SELECT * FROM player WHERE position IS NULL"
                 params = ()
             elif teamidValue == "사용안함":
-                sql = "SELECT * FROM player WHERE positionValue IS NULL AND NATION = %s"
+                sql = "SELECT * FROM player WHERE position IS NULL AND NATION = %s"
                 params = (nationValue)
             elif nationValue == "사용안함":
-                sql = "SELECT * FROM player WHERE positionValue IS NULL AND team_id = %s"
+                sql = "SELECT * FROM player WHERE position IS NULL AND team_id = %s"
                 params = (teamidValue)
             else:
-                sql = "SELECT * FROM player WHERE positionValue IS NULL AND teamidValue = %s AND NATION = %s"
+                sql = "SELECT * FROM player WHERE position IS NULL AND team_id = %s AND NATION = %s"
                 params = (teamidValue, nationValue)
         elif nationValue =='대한민국':
             if teamidValue == "사용안함" and positionValue == "사용안함":
@@ -167,6 +158,8 @@ class MainWindow(QWidget):
         # 콤보스 설정
         self.comboBox1 = QComboBox(self)
         self.comboBox1.addItem("사용안함")
+        self.teamidValue = self.comboBox1.currentText()
+
         ############포지션POSITION
         self.label2 = QLabel("포지션 :", self)
         self.label2.move(300, 50)
@@ -174,6 +167,8 @@ class MainWindow(QWidget):
         # 콤보스 설정
         self.comboBox2 = QComboBox(self)
         self.comboBox2.addItem("사용안함")
+        self.positionValue = self.comboBox2.currentText()
+
         ########## 출신국NATION
         self.label3 = QLabel("출신국 :", self)
         self.label3.move(500, 50)
@@ -181,6 +176,7 @@ class MainWindow(QWidget):
         # 콤보스 설정
         self.comboBox3 = QComboBox(self)
         self.comboBox3.addItem("사용안함")
+        self.nationValue = self.comboBox3.currentText()
         ############ 키 HEIGHT
         self.label4 = QLabel("키 :", self)
         self.label4.move(100, 80)
@@ -312,6 +308,7 @@ class MainWindow(QWidget):
         self.pushButton = QPushButton("저장", self)
         self.pushButton.move(700, 580)
         self.pushButton.resize(100, 30)
+
         self.pushButton.clicked.connect(self.pushButton_Clicked)
 
     def radioBtn_Clicked(self):
