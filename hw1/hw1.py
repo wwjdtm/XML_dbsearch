@@ -1,6 +1,9 @@
 import pymysql
 from PyQt5.QtWidgets import *
 import sys, datetime
+import csv
+import json
+import xml.etree.ElementTree as ET
 #gul_layout_1 : 초기화
 #gul_widget_3 : 선택
 
@@ -95,8 +98,6 @@ class DB_Queries:
             sql = "SELECT * FROM player WHERE team_id = %s AND position = %s AND NATION = %s"
             paramsl = [teamidValue,positionValue,nationValue]
 
-        print(sql[len(sql) - 1])
-
         if heightValue == "사용안함" and weightValue == "사용안함":
             sql = sql
             paramsl = paramsl
@@ -152,10 +153,6 @@ class DB_Queries:
         return tuples
     ###############################
     # 모든 검색문은 여기에 각각 하나의 메소드로 정의
-
-
-
-
     def selectPlayerTeamId(self):
         sql = "SELECT DISTINCT team_id FROM player"
         params = ()
@@ -282,9 +279,6 @@ class MainWindow(QWidget):
         self.comboBox5 = QComboBox(self)
         self.comboBox5.addItem("사용안함")
         self.weightValue = self.comboBox5.currentText()
-
-
-
         #선택박스
         self.groupbox2 = QGroupBox(self)
         self.radioBtn3 = QRadioButton("이상")
@@ -376,14 +370,13 @@ class MainWindow(QWidget):
         # 푸쉬버튼(초기화버튼) 설정
         self.pushButton = QPushButton("초기화", self)
         self.pushButton.move(700, 40)
-        self.pushButton.resize(100, 30)
+        self.pushButton. resize(100, 30)
         self.pushButton.clicked.connect(self.btnClear_Clicked)
         # 푸쉬버튼(검색버튼)  설정
         self.pushButton = QPushButton("검색", self)
         self.pushButton.move(700, 70)
         self.pushButton.resize(100, 30)
         self.pushButton.clicked.connect(self.pushButton_Clicked)
-
 
         #테이블위젯 설정
         self.tableWidget = QTableWidget(self)   # QTableWidget 객체 생성
@@ -393,7 +386,6 @@ class MainWindow(QWidget):
         # self.tableWidget.resize(500, 400)
 
         #파일출력
-
         self.label6 = QLabel("파일 출력", self)
         self.label6.move(60, 550)
         self.label6.resize(100, 20)
@@ -401,8 +393,11 @@ class MainWindow(QWidget):
         self.groupbox3 = QGroupBox(self)
         self.radioBtn5 = QRadioButton(" CSV")
         self.radioBtn5.setChecked(True)
+        self.radioBtn5.clicked.connect(self.save_Activated)
         self.radioBtn6 = QRadioButton(" JSON")
+        self.radioBtn6.clicked.connect(self.save_Activated)
         self.radioBtn7 = QRadioButton(" XML")
+        self.radioBtn7.clicked.connect(self.save_Activated)
         hBox = QHBoxLayout()
         hBox.addWidget(self.radioBtn5)
         hBox.addWidget(self.radioBtn6)
@@ -414,8 +409,7 @@ class MainWindow(QWidget):
         self.pushButton = QPushButton("저장", self)
         self.pushButton.move(700, 580)
         self.pushButton.resize(100, 30)
-
-        self.pushButton.clicked.connect(self.pushButton_Clicked)
+        self.pushButton.clicked.connect(self.saveButton_Clicked)
 
     def height_radioBtn_Clicked(self):
         heightmsg = ""
@@ -436,6 +430,16 @@ class MainWindow(QWidget):
 
         return weightmsg
 
+    def save_radioBtn_Clicked(self):
+        savemsg = ""
+        if self.radioBtn5.isChecked():
+            savemsg = "CSV"
+        elif self.radioBtn6.isChecked():
+            savemsg = "JSON"
+        elif self.radioBtn7.isChecked():
+            savemsg = "XML"
+        return savemsg
+
     def btnClear_Clicked(self):
         self.comboBox1.setCurrentIndex(0)
         self.comboBox2.setCurrentIndex(0)
@@ -444,6 +448,7 @@ class MainWindow(QWidget):
         self.comboBox5.setCurrentIndex(0)
         self.radioBtn1.setChecked(True)
         self.radioBtn3.setChecked(True)
+        self.radioBtn5.setChecked(True)
         QMessageBox.about(self, "", "초기화 되었습니다")
         self.tableWidget.clearContents()
 
@@ -495,6 +500,83 @@ class MainWindow(QWidget):
 
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
+
+    def save_Activated(self):
+        self.saveM = self.save_radioBtn_Clicked()
+
+    def saveButton_Clicked(self):
+        self.saveM = self.save_radioBtn_Clicked()
+        query = DB_Queries()
+        players = query.selectPlayerUsingvalue(self.teamidValue, self.positionValue, self.nationValue, self.heightValue,
+                                               self.heightM, self.weightValue, self.weightM)
+
+        if self.saveM == "CSV":
+            f = open('playersCSV.csv', 'w', encoding='utf-8', newline='')
+            wr = csv.writer(f)
+
+            columnNames = list(players[0].keys())
+            print(columnNames)
+            print()
+            wr.writerow(columnNames)
+            for rowIDX in range(len(players)):
+                row = list(players[rowIDX].values())
+                print(row)
+                wr.writerow(row)
+
+            f.close()
+
+        elif self.saveM == "JSON":
+            for player in players:
+                for k, v in player.items():
+                    if isinstance(v, datetime.date):
+                        player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+                        print(player[k])
+            print()
+
+            newDict = dict(playerGK=players)  # 키가 playeGK이고 value가 players
+            print(newDict)
+
+            # JSON 화일에 쓰기
+            # dump()에 의해 모든 작은 따옴표('')는 큰 따옴표("")로 변환됨
+            with open('playerJSON.json', 'w', encoding='utf-8') as f:
+                json.dump(newDict, f, ensure_ascii=False)
+
+            with open('playerJSON_indent.json', 'w', encoding='utf-8') as f:
+                json.dump(newDict, f, indent=4, ensure_ascii=False)
+
+        elif self.saveM == "XML":
+            for player in players:
+                for k, v in player.items():
+                    if isinstance(v, datetime.date):
+                        player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+
+            newDict = dict(playerGK=players)
+            print(newDict)
+
+            # XDM 트리 생성
+            tableName = list(newDict.keys())[0]
+            tableRows = list(newDict.values())[0]
+
+            rootElement = ET.Element('Table')
+            rootElement.attrib['name'] = tableName
+
+            for row in tableRows:
+                rowElement = ET.Element('Row')
+                rootElement.append(rowElement)
+
+                for columnName in list(row.keys()):
+                    if row[columnName] == None:  # NICKNAME, JOIN_YYYY, NATION 처리
+                        rowElement.attrib[columnName] = ''
+                    else:
+                        rowElement.attrib[columnName] = row[columnName]
+
+                    if type(row[columnName]) == int:  # BACK_NO, HEIGHT, WEIGHT 처리
+                        rowElement.attrib[columnName] = str(row[columnName])
+
+            # XDM 트리를 화일에 출력
+            ET.ElementTree(rootElement).write('playerXML.xml', encoding='utf-8', xml_declaration=True)
+
+        QMessageBox.about(self, "", "저장되었습니다")
 
 #########################################
 
