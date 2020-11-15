@@ -36,7 +36,6 @@ class DB_Queries:
 
     def selectPlayerUsingvalue(self, teamidValue, positionValue, nationValue, heightValue, heightM, weightValue, weightM):
         print(teamidValue, positionValue, nationValue, heightValue, heightM, weightValue, weightM)
-
         if positionValue == "미정" and nationValue =='대한민국':
             if teamidValue == "사용안함":
                 sql = "SELECT * FROM player WHERE position IS NULL AND NATION IS NULL"
@@ -96,49 +95,51 @@ class DB_Queries:
             sql = "SELECT * FROM player WHERE team_id = %s AND position = %s AND NATION = %s"
             paramsl = [teamidValue,positionValue,nationValue]
 
+        print(sql[len(sql) - 1])
+
         if heightValue == "사용안함" and weightValue == "사용안함":
             sql = sql
             paramsl = paramsl
         elif heightValue == "사용안함":
             if weightM=="이상":
-                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s"
+                if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT>= %s"
                 else:sql = sql + " AND WEIGHT>= %s"
                 paramsl.append(weightValue)
             else:
-                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s"
+                if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT<= %s"
                 else:sql = sql + " AND WEIGHT<= %s"
                 paramsl.append(weightValue)
 
         elif weightValue == "사용안함":
             if heightM=="이상":
-                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE HEIGHT>= %s"
+                if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE HEIGHT>= %s"
                 else:sql = sql + " AND HEIGHT>= %s"
                 paramsl.append(heightValue)
             else:
-                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE HEIGHT<= %s"
+                if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE HEIGHT<= %s"
                 else:sql = sql + " AND HEIGHT<= %s"
                 paramsl.append(heightValue)
         else:
             if weightM == "이상":
                 if heightM =="이상":
-                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT>= %s"
+                    if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT>= %s"
                     else:sql = sql + " AND WEIGHT>= %s AND HEIGHT>= %s"
                     paramsl.append(weightValue)
                     paramsl.append(heightValue)
 
                 if heightM =="이하":
-                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT<= %s"
+                    if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT<= %s"
                     else:sql = sql + " AND WEIGHT>= %s AND HEIGHT<= %s"
                     paramsl.append(weightValue)
                     paramsl.append(heightValue)
             elif weightM =="이하":
                 if heightM == "이상":
-                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT>= %s"
+                    if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT>= %s"
                     else:sql = sql + " AND WEIGHT<= %s AND HEIGHT>= %s"
                     paramsl.append(weightValue)
                     paramsl.append(heightValue)
                 if heightM == "이하":
-                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT<= %s"
+                    if (sql[len(sql) - 1] == "r"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT<= %s"
                     else:sql = sql + " AND WEIGHT<= %s AND HEIGHT<= %s"
                     paramsl.append(weightValue)
                     paramsl.append(heightValue)
@@ -262,6 +263,7 @@ class MainWindow(QWidget):
         self.groupbox1 = QGroupBox(self)
         self.radioBtn1 = QRadioButton("이상")
         self.radioBtn1.setChecked(True)
+        self.heightM = ("이상")
         self.radioBtn1.clicked.connect(self.comboBox_Activated)
         self.radioBtn2 = QRadioButton("이하")
         self.radioBtn2.clicked.connect(self.comboBox_Activated)
@@ -287,6 +289,7 @@ class MainWindow(QWidget):
         self.groupbox2 = QGroupBox(self)
         self.radioBtn3 = QRadioButton("이상")
         self.radioBtn3.setChecked(True)
+        self.weightM = ("이상")
         self.radioBtn3.clicked.connect(self.comboBox_Activated)
         self.radioBtn4 = QRadioButton("이하")
         self.radioBtn4.clicked.connect(self.comboBox_Activated)
@@ -374,7 +377,7 @@ class MainWindow(QWidget):
         self.pushButton = QPushButton("초기화", self)
         self.pushButton.move(700, 40)
         self.pushButton.resize(100, 30)
-        self.pushButton.clicked.connect(self.pushButton_Clicked)
+        self.pushButton.clicked.connect(self.btnClear_Clicked)
         # 푸쉬버튼(검색버튼)  설정
         self.pushButton = QPushButton("검색", self)
         self.pushButton.move(700, 70)
@@ -431,9 +434,18 @@ class MainWindow(QWidget):
         elif self.radioBtn4.isChecked():
             weightmsg = "이하"
 
-        print(weightmsg)
         return weightmsg
 
+    def btnClear_Clicked(self):
+        self.comboBox1.setCurrentIndex(0)
+        self.comboBox2.setCurrentIndex(0)
+        self.comboBox3.setCurrentIndex(0)
+        self.comboBox4.setCurrentIndex(0)
+        self.comboBox5.setCurrentIndex(0)
+        self.radioBtn1.setChecked(True)
+        self.radioBtn3.setChecked(True)
+        QMessageBox.about(self, "", "초기화 되었습니다")
+        self.tableWidget.clearContents()
 
     def comboBox_Activated(self):
         self.teamidValue = self.comboBox1.currentText()
@@ -449,8 +461,6 @@ class MainWindow(QWidget):
         # DB 검색문 실행
         query = DB_Queries()
         players = query.selectPlayerUsingvalue(self.teamidValue,self.positionValue,self.nationValue,self.heightValue,self.heightM,self.weightValue,self.weightM)
-        print(self.teamidValue,self.positionValue,self.nationValue,self.heightValue,self.heightM,self.weightValue,self.weightM)
-
 
         if players is not None:
 
