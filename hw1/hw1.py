@@ -4,8 +4,6 @@ import sys, datetime
 import csv
 import json
 import xml.etree.ElementTree as ET
-#gul_layout_1 : 초기화
-#gul_widget_3 : 선택
 
 class DB_Utils:
 
@@ -161,7 +159,7 @@ class DB_Queries:
         return tuples
 
     def selectPlayerPosition(self):
-        sql = "SELECT DISTINCT position FROM player" #포지션만 뽑고 distict:중복된벨류 없애라
+        sql = "SELECT DISTINCT position FROM player"
         params = ()
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
@@ -381,7 +379,7 @@ class MainWindow(QWidget):
         #테이블위젯 설정
         self.tableWidget = QTableWidget(self)   # QTableWidget 객체 생성
         self.tableWidget.move(50, 120)
-        self.tableWidget.resize(900, 400)
+        self.tableWidget.resize(1000, 400)
         # self.tableWidget.move(50, 120)
         # self.tableWidget.resize(500, 400)
 
@@ -482,12 +480,18 @@ class MainWindow(QWidget):
                     player = players[rowIDX]
                     for k, v in player.items():
                         columnIDX = columnNames.index(k)
-                        if v == None:           # 파이썬이 DB의 널값을 None으로 변환함.
-                            continue            # QTableWidgetItem 객체를 생성하지 않음
-                        elif isinstance(v, datetime.date):      # QTableWidgetItem 객체 생성
-                            item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
+                        if columnIDX == 6:
+                            if v == None: item = QTableWidgetItem("미정")
+                            else: item = QTableWidgetItem(str(v))
+                        elif columnIDX == 8:
+                            if v == None: item = QTableWidgetItem("대한민국")
+                            else: item = QTableWidgetItem(str(v))
                         else:
-                            item = QTableWidgetItem(str(v))
+                            if v == None:continue
+                            elif isinstance(v, datetime.date):      # QTableWidgetItem 객체 생성
+                                item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
+                            else:
+                                item = QTableWidgetItem(str(v))
                         self.tableWidget.setItem(rowIDX, columnIDX, item)
 
                 print(item)
@@ -511,72 +515,76 @@ class MainWindow(QWidget):
                                                self.heightM, self.weightValue, self.weightM)
 
         if self.saveM == "CSV":
-            f = open('playersCSV.csv', 'w', encoding='utf-8', newline='')
-            wr = csv.writer(f)
+            if len(players) != 0:
+                f = open('playersCSV.csv', 'w', encoding='utf-8', newline='')
+                wr = csv.writer(f)
 
-            columnNames = list(players[0].keys())
-            print(columnNames)
-            print()
-            wr.writerow(columnNames)
-            for rowIDX in range(len(players)):
-                row = list(players[rowIDX].values())
-                print(row)
-                wr.writerow(row)
+                columnNames = list(players[0].keys())
+                print(columnNames)
+                print()
+                wr.writerow(columnNames)
 
-            f.close()
+                for rowIDX in range(len(players)):
+                    row = list(players[rowIDX].values())
+                    print(row)
+                    wr.writerow(row)
+
+                f.close()
+                QMessageBox.about(self, "", "저장되었습니다")
+            else:
+                QMessageBox.about(self, "", "저장할 내용이 없습니다")
 
         elif self.saveM == "JSON":
-            for player in players:
-                for k, v in player.items():
-                    if isinstance(v, datetime.date):
-                        player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
-                        print(player[k])
-            print()
+            if len(players) != 0:
+                for player in players:
+                    for k, v in player.items():
+                        if isinstance(v, datetime.date):
+                            player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+                            print(player[k])
+                print()
 
-            newDict = dict(playerGK=players)  # 키가 playeGK이고 value가 players
-            print(newDict)
+                newDict = dict(playerGK=players)  # 키가 playeGK이고 value가 players
+                print(newDict)
 
-            # JSON 화일에 쓰기
-            # dump()에 의해 모든 작은 따옴표('')는 큰 따옴표("")로 변환됨
-            with open('playerJSON.json', 'w', encoding='utf-8') as f:
-                json.dump(newDict, f, ensure_ascii=False)
-
-            with open('playerJSON_indent.json', 'w', encoding='utf-8') as f:
-                json.dump(newDict, f, indent=4, ensure_ascii=False)
+                with open('playerJSON.json', 'w', encoding='utf-8') as f:
+                    json.dump(newDict, f, indent=4, ensure_ascii=False)
+                QMessageBox.about(self, "", "저장되었습니다")
+            else:
+                QMessageBox.about(self, "", "저장할 내용이 없습니다")
 
         elif self.saveM == "XML":
-            for player in players:
-                for k, v in player.items():
-                    if isinstance(v, datetime.date):
-                        player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+            if len(players) != 0:
+                for player in players:
+                    for k, v in player.items():
+                        if isinstance(v, datetime.date):
+                            player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
 
-            newDict = dict(playerGK=players)
-            print(newDict)
+                newDict = dict(playerGK=players)
+                print(newDict)
 
-            # XDM 트리 생성
-            tableName = list(newDict.keys())[0]
-            tableRows = list(newDict.values())[0]
+                tableName = list(newDict.keys())[0]
+                tableRows = list(newDict.values())[0]
 
-            rootElement = ET.Element('Table')
-            rootElement.attrib['name'] = tableName
+                rootElement = ET.Element('Table')
+                rootElement.attrib['name'] = tableName
 
-            for row in tableRows:
-                rowElement = ET.Element('Row')
-                rootElement.append(rowElement)
+                for row in tableRows:
+                    rowElement = ET.Element('Row')
+                    rootElement.append(rowElement)
 
-                for columnName in list(row.keys()):
-                    if row[columnName] == None:  # NICKNAME, JOIN_YYYY, NATION 처리
-                        rowElement.attrib[columnName] = ''
-                    else:
-                        rowElement.attrib[columnName] = row[columnName]
+                    for columnName in list(row.keys()):
+                        if row[columnName] == None:
+                            rowElement.attrib[columnName] = ''
+                        else:
+                            rowElement.attrib[columnName] = row[columnName]
 
-                    if type(row[columnName]) == int:  # BACK_NO, HEIGHT, WEIGHT 처리
-                        rowElement.attrib[columnName] = str(row[columnName])
+                        if type(row[columnName]) == int:
+                            rowElement.attrib[columnName] = str(row[columnName])
 
-            # XDM 트리를 화일에 출력
-            ET.ElementTree(rootElement).write('playerXML.xml', encoding='utf-8', xml_declaration=True)
-
-        QMessageBox.about(self, "", "저장되었습니다")
+                ET.ElementTree(rootElement).write('playerXML.xml', encoding='utf-8', xml_declaration=True)
+                QMessageBox.about(self, "", "저장되었습니다")
+            else:
+                QMessageBox.about(self, "", "저장할 내용이 없습니다")
 
 #########################################
 
