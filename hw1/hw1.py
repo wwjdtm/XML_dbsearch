@@ -8,25 +8,14 @@ import xml.etree.ElementTree as ET
 class DB_Utils:
 
     def queryExecutor(self, db, sql, params):
-        conn = pymysql.connect(host='localhost', user='root', password='jeong5607', db=db, charset='utf8')
+        # conn = pymysql.connect(host='localhost', user='root', password='jeong5607', db=db, charset='utf8')
+
+        conn = pymysql.connect(host='localhost', user ='guest', password ='bemyguest', db =db, charset ='utf8')
         try:
             with conn.cursor(pymysql.cursors.DictCursor) as cursor:     # dictionary based cursor
                 cursor.execute(sql, params)
                 tuples = cursor.fetchall()
                 return tuples
-        except Exception as e:
-            print(e)
-            print(type(e))
-        finally:
-            conn.close()
-
-    def updateExecutor(self, db, sql, params):
-        conn = pymysql.connect(host='localhost', user='root', password='jeong5607', db=db, charset='utf8')
-
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(sql, params)
-            conn.commit() #갱신할때는 커밋해줘야함. 데이터베이스 벨류 바꿔야되기때문
         except Exception as e:
             print(e)
             print(type(e))
@@ -149,8 +138,7 @@ class DB_Queries:
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params2)
         return tuples
-    ###############################
-    # 모든 검색문은 여기에 각각 하나의 메소드로 정의
+
     def selectPlayerTeamId(self):
         sql = "SELECT DISTINCT team_id FROM player"
         params = ()
@@ -177,7 +165,6 @@ class DB_Queries:
         params = ()
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
-
         return tuples
 
     def selectPlayerminHeight(self):
@@ -185,7 +172,6 @@ class DB_Queries:
         params = ()
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
-
         return tuples
 
     def selectPlayermaxWeight(self):
@@ -201,10 +187,7 @@ class DB_Queries:
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
         return tuples
-
-
 ##################################################
-
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -213,10 +196,8 @@ class MainWindow(QWidget):
     def setupUI(self):
 
         # 윈도우 설정
-        self.setWindowTitle("DBAPI를 통한 테이블 위젯 제어 예제")
+        self.setWindowTitle("DB_search_table")
         self.setGeometry(0, 0, 1100, 620)
-
-        ##### 라벨 설정
         ##########팀명 TEAM_ID
         self.label1 = QLabel("팀명 :", self)
         self.label1.move(100, 50)
@@ -251,9 +232,6 @@ class MainWindow(QWidget):
         self.comboBox4 = QComboBox(self)
         self.comboBox4.addItem("사용안함")
         self.heightValue = self.comboBox4.currentText()
-
-
-
         #선택박스
         self.groupbox1 = QGroupBox(self)
         self.radioBtn1 = QRadioButton("이상")
@@ -268,7 +246,6 @@ class MainWindow(QWidget):
         self.groupbox1.setLayout(hBox)
         self.groupbox1.move(230, 70)
         self.groupbox1.setStyleSheet("background-color:#f9f9f9;")
-
         ########## 몸무게 WEIGHT
         self.label5 = QLabel("몸무게 :", self)
         self.label5.move(400, 80)
@@ -291,11 +268,9 @@ class MainWindow(QWidget):
         self.groupbox2.setLayout(hBox)
         self.groupbox2.move(550, 70)
         self.groupbox2.setStyleSheet("background-color:#f9f9f9;")
-
 #############################################################
         query = DB_Queries()
         # DB 검색문 실행
-
         rows1 = query.selectPlayerTeamId()
         columnName = list(rows1[0].keys())[0]
         items1 = ['없음' if row[columnName] == None else row[columnName] for row in rows1]
@@ -341,9 +316,6 @@ class MainWindow(QWidget):
         for i in range(weightmin, weightmax + 1):
             self.comboBox5.addItem(str(i))
 
-        # ***- self.comboBox4.addItems(items)
-        # ***- self.comboBox5.addItems(items)
-
         self.comboBox1.move(170, 50)
         self.comboBox1.resize(100, 20)
         self.comboBox1.activated.connect(self.comboBox_Activated)
@@ -353,7 +325,6 @@ class MainWindow(QWidget):
         self.comboBox2.activated.connect(self.comboBox_Activated)
 
         self.comboBox3.move(570, 50)
-        # *** - self.comboBox3.move(170, 80)
         self.comboBox3.resize(100, 20)
         self.comboBox3.activated.connect(self.comboBox_Activated)
 
@@ -389,12 +360,12 @@ class MainWindow(QWidget):
         self.label6.resize(100, 20)
 
         self.groupbox3 = QGroupBox(self)
-        self.radioBtn5 = QRadioButton(" CSV")
+        self.radioBtn5 = QRadioButton("CSV")
         self.radioBtn5.setChecked(True)
         self.radioBtn5.clicked.connect(self.save_Activated)
-        self.radioBtn6 = QRadioButton(" JSON")
+        self.radioBtn6 = QRadioButton("JSON")
         self.radioBtn6.clicked.connect(self.save_Activated)
-        self.radioBtn7 = QRadioButton(" XML")
+        self.radioBtn7 = QRadioButton("XML")
         self.radioBtn7.clicked.connect(self.save_Activated)
         hBox = QHBoxLayout()
         hBox.addWidget(self.radioBtn5)
@@ -460,46 +431,40 @@ class MainWindow(QWidget):
         self.heightM = self.height_radioBtn_Clicked()
 
     def pushButton_Clicked(self):
-
         # DB 검색문 실행
         query = DB_Queries()
         players = query.selectPlayerUsingvalue(self.teamidValue,self.positionValue,self.nationValue,self.heightValue,self.heightM,self.weightValue,self.weightM)
 
-        if players is not None:
+        if len(players) != 0:
 
-            if len(players) != 0:
+            self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(len(players))
+            self.tableWidget.setColumnCount(len(players[0]))
+            columnNames = list(players[0].keys())
+            self.tableWidget.setHorizontalHeaderLabels(columnNames)
+            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-                self.tableWidget.clearContents()
-                self.tableWidget.setRowCount(len(players))
-                self.tableWidget.setColumnCount(len(players[0]))
-                columnNames = list(players[0].keys())
-                self.tableWidget.setHorizontalHeaderLabels(columnNames)
-                self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
-                for rowIDX in range(len(players)):
-                    player = players[rowIDX]
-                    for k, v in player.items():
-                        columnIDX = columnNames.index(k)
-                        if columnIDX == 6:
-                            if v == None: item = QTableWidgetItem("미정")
-                            else: item = QTableWidgetItem(str(v))
-                        elif columnIDX == 8:
-                            if v == None: item = QTableWidgetItem("대한민국")
-                            else: item = QTableWidgetItem(str(v))
+            for rowIDX in range(len(players)):
+                player = players[rowIDX]
+                for k, v in player.items():
+                    columnIDX = columnNames.index(k)
+                    if columnIDX == 6:
+                        if v == None: item = QTableWidgetItem("미정")
+                        else: item = QTableWidgetItem(str(v))
+                    elif columnIDX == 8:
+                        if v == None: item = QTableWidgetItem("대한민국")
+                        else: item = QTableWidgetItem(str(v))
+                    else:
+                        if v == None:continue
+                        elif isinstance(v, datetime.date):      # QTableWidgetItem 객체 생성
+                            item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
                         else:
-                            if v == None:continue
-                            elif isinstance(v, datetime.date):      # QTableWidgetItem 객체 생성
-                                item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
-                            else:
-                                item = QTableWidgetItem(str(v))
-                        self.tableWidget.setItem(rowIDX, columnIDX, item)
+                            item = QTableWidgetItem(str(v))
+                    self.tableWidget.setItem(rowIDX, columnIDX, item)
 
-                print(item)
-            else:
-                QMessageBox.about(self, "", "검색된 데이터가 없습니다")
-                self.tableWidget.clearContents()
+            print(item)
         else:
-            QMessageBox.about(self, "","검색된 데이터가 없습니다" )
+            QMessageBox.about(self, "", "검색된 데이터가 없습니다")
             self.tableWidget.clearContents()
 
         self.tableWidget.resizeColumnsToContents()
@@ -528,7 +493,6 @@ class MainWindow(QWidget):
                     row = list(players[rowIDX].values())
                     print(row)
                     wr.writerow(row)
-
                 f.close()
                 QMessageBox.about(self, "", "저장되었습니다")
             else:
@@ -539,13 +503,11 @@ class MainWindow(QWidget):
                 for player in players:
                     for k, v in player.items():
                         if isinstance(v, datetime.date):
-                            player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+                            player[k] = v.strftime('%Y-%m-%d')
                             print(player[k])
                 print()
-
-                newDict = dict(playerGK=players)  # 키가 playeGK이고 value가 players
+                newDict = dict(PLAYER=players)
                 print(newDict)
-
                 with open('playerJSON.json', 'w', encoding='utf-8') as f:
                     json.dump(newDict, f, indent=4, ensure_ascii=False)
                 QMessageBox.about(self, "", "저장되었습니다")
@@ -557,10 +519,9 @@ class MainWindow(QWidget):
                 for player in players:
                     for k, v in player.items():
                         if isinstance(v, datetime.date):
-                            player[k] = v.strftime('%Y-%m-%d')  # 키가 k인 item의 값 v를 수정
+                            player[k] = v.strftime('%Y-%m-%d')
 
-                newDict = dict(playerGK=players)
-                print(newDict)
+                newDict = dict(PLAYER=players)
 
                 tableName = list(newDict.keys())[0]
                 tableRows = list(newDict.values())[0]
@@ -571,13 +532,11 @@ class MainWindow(QWidget):
                 for row in tableRows:
                     rowElement = ET.Element('Row')
                     rootElement.append(rowElement)
-
                     for columnName in list(row.keys()):
                         if row[columnName] == None:
                             rowElement.attrib[columnName] = ''
                         else:
                             rowElement.attrib[columnName] = row[columnName]
-
                         if type(row[columnName]) == int:
                             rowElement.attrib[columnName] = str(row[columnName])
 
