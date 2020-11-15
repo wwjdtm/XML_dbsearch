@@ -34,73 +34,127 @@ class DB_Utils:
 
 class DB_Queries:
 
-    def selectPlayerUsingvalue(self, teamidValue, positionValue, nationValue):
-        print(teamidValue, positionValue, nationValue)
+    def selectPlayerUsingvalue(self, teamidValue, positionValue, nationValue, heightValue, heightM, weightValue, weightM):
+        print(teamidValue, positionValue, nationValue, heightValue, heightM, weightValue, weightM)
+
         if positionValue == "미정" and nationValue =='대한민국':
             if teamidValue == "사용안함":
                 sql = "SELECT * FROM player WHERE position IS NULL AND NATION IS NULL"
-                params = ()
+                paramsl = []
             else:
                 sql = "SELECT * FROM player WHERE position IS NULL AND NATION IS NULL AND team_id = %s"
-                params = (teamidValue)
+                paramsl = [teamidValue]
         elif positionValue == "미정":
-            print("여기여기")
             if teamidValue == "사용안함" and nationValue == "사용안함":
                 sql = "SELECT * FROM player WHERE position IS NULL"
-                params = ()
+                paramsl = []
             elif teamidValue == "사용안함":
                 sql = "SELECT * FROM player WHERE position IS NULL AND NATION = %s"
-                params = (nationValue)
+                paramsl = [nationValue]
             elif nationValue == "사용안함":
                 sql = "SELECT * FROM player WHERE position IS NULL AND team_id = %s"
-                params = (teamidValue)
+                paramsl = [teamidValue]
             else:
                 sql = "SELECT * FROM player WHERE position IS NULL AND team_id = %s AND NATION = %s"
-                params = (teamidValue, nationValue)
+                paramsl = [teamidValue, nationValue]
         elif nationValue =='대한민국':
             if teamidValue == "사용안함" and positionValue == "사용안함":
                 sql = "SELECT * FROM player WHERE NATION IS NULL"
-                params = ()
+                paramsl = []
             elif teamidValue == "사용안함":
                 sql = "SELECT * FROM player WHERE NATION IS NULL AND position = %s"
-                params = (positionValue)
+                paramsl = [positionValue]
             elif positionValue == "사용안함":
                 sql = "SELECT * FROM player WHERE NATION IS NULL AND team_id = %s"
-                params = (teamidValue)
+                paramsl = [teamidValue]
             else:
                 sql = "SELECT * FROM player WHERE NATION IS NULL AND team_id = %s AND position = %s"
-                params = (teamidValue, positionValue)
+                paramsl = [teamidValue, positionValue]
 
         elif teamidValue =="사용안함" and positionValue =="사용안함" and nationValue =="사용안함":
             sql = "SELECT * FROM player"
-            params = ()
+            paramsl = []
         elif teamidValue =='사용안함' and positionValue =="사용안함":
             sql = "SELECT * FROM player WHERE NATION = %s"
-            params = (nationValue)
+            paramsl = [nationValue]
         elif teamidValue =='사용안함' and nationValue =="사용안함":
             sql = "SELECT * FROM player WHERE position = %s"
-            params = (positionValue)
+            paramsl = [positionValue]
         elif positionValue =="사용안함" and nationValue =="사용안함":
             sql = "SELECT * FROM player WHERE team_id = %s"
-            params = (teamidValue)
+            paramsl = [teamidValue]
         elif teamidValue =='사용안함':
             sql = "SELECT * FROM player WHERE position = %s AND NATION = %s"
-            params = (positionValue, nationValue)
+            paramsl = [positionValue, nationValue]
         elif positionValue =='사용안함':
             sql = "SELECT * FROM player WHERE team_id = %s AND NATION = %s"
-            params = (teamidValue, nationValue)
+            paramsl = [teamidValue, nationValue]
         elif nationValue =='사용안함':
             sql = "SELECT * FROM player WHERE team_id = %s AND position = %s"
-            params = (teamidValue, positionValue)
+            paramsl = [teamidValue, positionValue]
         else:
             sql = "SELECT * FROM player WHERE team_id = %s AND position = %s AND NATION = %s"
-            params = (teamidValue,positionValue,nationValue)
+            paramsl = [teamidValue,positionValue,nationValue]
 
+        if heightValue == "사용안함" and weightValue == "사용안함":
+            sql = sql
+            paramsl = paramsl
+        elif heightValue == "사용안함":
+            if weightM=="이상":
+                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s"
+                else:sql = sql + " AND WEIGHT>= %s"
+                paramsl.append(weightValue)
+            else:
+                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s"
+                else:sql = sql + " AND WEIGHT<= %s"
+                paramsl.append(weightValue)
+
+        elif weightValue == "사용안함":
+            if heightM=="이상":
+                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE HEIGHT>= %s"
+                else:sql = sql + " AND HEIGHT>= %s"
+                paramsl.append(heightValue)
+            else:
+                if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE HEIGHT<= %s"
+                else:sql = sql + " AND HEIGHT<= %s"
+                paramsl.append(heightValue)
+        else:
+            if weightM == "이상":
+                if heightM =="이상":
+                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT>= %s"
+                    else:sql = sql + " AND WEIGHT>= %s AND HEIGHT>= %s"
+                    paramsl.append(weightValue)
+                    paramsl.append(heightValue)
+
+                if heightM =="이하":
+                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT>= %s AND HEIGHT<= %s"
+                    else:sql = sql + " AND WEIGHT>= %s AND HEIGHT<= %s"
+                    paramsl.append(weightValue)
+                    paramsl.append(heightValue)
+            elif weightM =="이하":
+                if heightM == "이상":
+                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT>= %s"
+                    else:sql = sql + " AND WEIGHT<= %s AND HEIGHT>= %s"
+                    paramsl.append(weightValue)
+                    paramsl.append(heightValue)
+                if heightM == "이하":
+                    if (sql[len(sql) - 1] == "player"):sql = sql + " WHERE WEIGHT<= %s AND HEIGHT<= %s"
+                    else:sql = sql + " AND WEIGHT<= %s AND HEIGHT<= %s"
+                    paramsl.append(weightValue)
+                    paramsl.append(heightValue)
+
+        params2 = (tuple(paramsl))
+        print(sql)
+        print(params2)
         util = DB_Utils()
-        tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
+        tuples = util.queryExecutor(db="kleague", sql=sql, params=params2)
         return tuples
     ###############################
     # 모든 검색문은 여기에 각각 하나의 메소드로 정의
+
+
+
+
     def selectPlayerTeamId(self):
         sql = "SELECT DISTINCT team_id FROM player"
         params = ()
@@ -122,15 +176,31 @@ class DB_Queries:
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
         return tuples
 
-    def selectPlayerHeight(self):
-        sql = "SELECT DISTINCT HEIGHT FROM player"
+    def selectPlayermaxHeight(self):
+        sql = "SELECT MAX(HEIGHT) FROM player"
+        params = ()
+        util = DB_Utils()
+        tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
+
+        return tuples
+
+    def selectPlayerminHeight(self):
+        sql = "SELECT MIN(HEIGHT) FROM player"
+        params = ()
+        util = DB_Utils()
+        tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
+
+        return tuples
+
+    def selectPlayermaxWeight(self):
+        sql = "SELECT MAX(WEIGHT) FROM player"
         params = ()
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
         return tuples
 
-    def selectPlayerWeight(self):
-        sql = "SELECT DISTINCT WEIGHT FROM player"
+    def selectPlayerminWeight(self):
+        sql = "SELECT MIN(WEIGHT) FROM player"
         params = ()
         util = DB_Utils()
         tuples = util.queryExecutor(db="kleague", sql=sql, params=params)
@@ -184,11 +254,17 @@ class MainWindow(QWidget):
         # 콤보스 설정
         self.comboBox4 = QComboBox(self)
         self.comboBox4.addItem("사용안함")
+        self.heightValue = self.comboBox4.currentText()
+
+
+
         #선택박스
         self.groupbox1 = QGroupBox(self)
         self.radioBtn1 = QRadioButton("이상")
         self.radioBtn1.setChecked(True)
+        self.radioBtn1.clicked.connect(self.comboBox_Activated)
         self.radioBtn2 = QRadioButton("이하")
+        self.radioBtn2.clicked.connect(self.comboBox_Activated)
         hBox = QHBoxLayout()
         hBox.addWidget(self.radioBtn1)
         hBox.addWidget(self.radioBtn2)
@@ -203,11 +279,17 @@ class MainWindow(QWidget):
         # 콤보스 설정
         self.comboBox5 = QComboBox(self)
         self.comboBox5.addItem("사용안함")
+        self.weightValue = self.comboBox5.currentText()
+
+
+
         #선택박스
         self.groupbox2 = QGroupBox(self)
         self.radioBtn3 = QRadioButton("이상")
         self.radioBtn3.setChecked(True)
+        self.radioBtn3.clicked.connect(self.comboBox_Activated)
         self.radioBtn4 = QRadioButton("이하")
+        self.radioBtn4.clicked.connect(self.comboBox_Activated)
         hBox = QHBoxLayout()
         hBox.addWidget(self.radioBtn3)
         hBox.addWidget(self.radioBtn4)
@@ -233,16 +315,36 @@ class MainWindow(QWidget):
         columnName = list(rows3[0].keys())[0]
         items3 = ['대한민국' if row[columnName] == None else row[columnName] for row in rows3]
         self.comboBox3.addItems(items3)
+        ###########키 최대최소 넣어주기 ###################
+        rows4max = query.selectPlayermaxHeight()
+        heightmax=0
+        for sub in rows4max:
+            for key in sub:
+                heightmax = int(sub[key])
+        rows4min = query.selectPlayerminHeight()
+        heightmin = 0
+        for sub in rows4min:
+            for key in sub:
+                heightmin = int(sub[key])
 
-        rows4 = query.selectPlayerHeight()
-        columnName = list(rows4[0].keys())[0]
-        items4 = ['' if row[columnName] == None else str(row[columnName]) for row in rows4]
-        self.comboBox4.addItems(items4)
+        for i in range(heightmin,heightmax+1):
+            self.comboBox4.addItem(str(i))
 
-        rows5 = query.selectPlayerWeight()
-        columnName = list(rows5[0].keys())[0]
-        items5 = ['' if row[columnName] == None else str(row[columnName]) for row in rows5]
-        self.comboBox5.addItems(items5)
+        ###################몸무게 넣어주기##############
+        rows5max = query.selectPlayermaxWeight()
+        weightmax = 0
+        for sub in rows5max:
+            for key in sub:
+                weightmax = int(sub[key])
+
+        rows5min = query.selectPlayerminWeight()
+        weightmin = 0
+        for sub in rows5min:
+            for key in sub:
+                weightmin = int(sub[key])
+
+        for i in range(weightmin, weightmax + 1):
+            self.comboBox5.addItem(str(i))
 
         # ***- self.comboBox4.addItems(items)
         # ***- self.comboBox5.addItems(items)
@@ -279,6 +381,7 @@ class MainWindow(QWidget):
         self.pushButton.resize(100, 30)
         self.pushButton.clicked.connect(self.pushButton_Clicked)
 
+
         #테이블위젯 설정
         self.tableWidget = QTableWidget(self)   # QTableWidget 객체 생성
         self.tableWidget.move(50, 120)
@@ -311,26 +414,44 @@ class MainWindow(QWidget):
 
         self.pushButton.clicked.connect(self.pushButton_Clicked)
 
-    def radioBtn_Clicked(self):
-        msg = ""
+    def height_radioBtn_Clicked(self):
+        heightmsg = ""
+        if self.radioBtn1.isChecked():
+            heightmsg = "이상"
+        elif self.radioBtn2.isChecked():
+            heightmsg = "이하"
 
-        if self.radioBtn1.isChecked() or self.radioBtn3.isChecked():
-            msg = "이상"
-        else: msg = "이하"
+        return heightmsg
 
-        # self.statusBar.showMessage(msg + " 선택됨")
+
+    def weight_radioBtn_Clicked(self):
+        weightmsg = ""
+        if self.radioBtn3.isChecked():
+            weightmsg = "이상"
+        elif self.radioBtn4.isChecked():
+            weightmsg = "이하"
+
+        print(weightmsg)
+        return weightmsg
+
 
     def comboBox_Activated(self):
         self.teamidValue = self.comboBox1.currentText()
         self.positionValue = self.comboBox2.currentText()  # positionValue를 통해 선택한 포지션 값을 전달
         self.nationValue = self.comboBox3.currentText()
+        self.heightValue = self.comboBox4.currentText()
+        self.weightValue = self.comboBox5.currentText()
+        self.weightM = self.weight_radioBtn_Clicked()
+        self.heightM = self.height_radioBtn_Clicked()
 
     def pushButton_Clicked(self):
 
         # DB 검색문 실행
         query = DB_Queries()
-        players = query.selectPlayerUsingvalue(self.teamidValue,self.positionValue,self.nationValue)
-        print(self.teamidValue,self.positionValue,self.nationValue)
+        players = query.selectPlayerUsingvalue(self.teamidValue,self.positionValue,self.nationValue,self.heightValue,self.heightM,self.weightValue,self.weightM)
+        print(self.teamidValue,self.positionValue,self.nationValue,self.heightValue,self.heightM,self.weightValue,self.weightM)
+
+
         if players is not None:
 
             if len(players) != 0:
